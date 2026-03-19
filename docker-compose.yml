@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  db:
+    image: mysql:8.0
+    container_name: securebank-mysql
+    environment:
+      MYSQL_DATABASE: securebank
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_USER: securebankuser
+      MYSQL_PASSWORD: securebankpassword
+    ports:
+      - "3306:3306"
+    volumes:
+      - securebank-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build: .
+    container_name: securebank-api
+    ports:
+      - "8080:8080"
+    environment:
+      - DATABASE_URL=jdbc:mysql://db:3306/securebank
+      - DATABASE_USERNAME=securebankuser
+      - DATABASE_PASSWORD=securebankpassword
+      - JWT_SECRET=your-production-256-bit-secret-key-here-securebank-prod
+      - HIBERNATE_DDL_AUTO=update
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  securebank-data:
